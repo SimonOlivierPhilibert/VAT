@@ -30,7 +30,7 @@ jobs:
       - name: Build app
         shell: bash
         run: |
-          uv run --with-requirements requirements.txt flet build web --yes --verbose --base-url ${GITHUB_REPOSITORY#*/} --route-url-strategy hash
+          uv run --with flet --with-requirements requirements.txt flet build web --yes --verbose --base-url ${GITHUB_REPOSITORY#*/} --route-url-strategy hash
 
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v4.0.0
