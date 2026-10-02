@@ -22,7 +22,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7.0.1
 
       - name: Setup uv
         uses: astral-sh/setup-uv@v10.1.0
@@ -33,7 +33,7 @@ jobs:
           uv run --with flet --with-requirements requirements.txt flet build web --yes --verbose --base-url ${GITHUB_REPOSITORY#*/} --route-url-strategy hash
 
       - name: Upload Pages Artifact
-        uses: actions/upload-pages-artifact@v5
+        uses: actions/upload-pages-artifact@v5.0.0
         with:
           path: build/web
           name: web-build-artifact
@@ -55,10 +55,10 @@ jobs:
 
     steps:
       - name: Setup Pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v6.0.0
 
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v5
+        uses: actions/deploy-pages@v5.0.1
         with:
           artifact_name: web-build-artifact
