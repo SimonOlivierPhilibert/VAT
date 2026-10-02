@@ -25,7 +25,7 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Setup uv
-        uses: astral-sh/setup-uv@v10
+        uses: astral-sh/setup-uv@v10.1.0
 
       - name: Build app
         shell: bash
