@@ -1,32 +1,40 @@
 import io
+from pathlib import Path
 
 import flet as ft
+import h5py
+import numpy as np
 import tifffile
+
+
+def file_to_dict(file: ft.FilePickerFile) -> dict:
+    filename = Path(file.name).stem
+    array = tifffile.imread(io.BytesIO(file.bytes))
+    return {filename: dict(ang=array)}
 
 
 def main(page: ft.Page):
     page.title = 'MICHe Lab\'s Vascular Analysis Tool'
     page.appbar = ft.AppBar(title=ft.Text(page.title), center_title=True)
 
-    data = dict()
-    arrays = []
+    loaded_files = dict()
 
     def handle_result(e: ft.FilePickerResultEvent):
-        arrays.clear()
-        arrays.extend([tifffile.imread(io.BytesIO(file.bytes))
-                       for file in e.files])
-        upload_button.disabled = not arrays
+        for file in e.files:
+            loaded_files.update(file_to_dict(file))
+        upload_button.disabled = not loaded_files
+        page.update()
 
     def handle_upload():
-        for array in arrays:
-            print(array.shape, array.dtype)
+        for filename, data in loaded_files.items():
+            print(filename, data.keys())
 
-    file_picker = ft.FilePicker(on_result=handle_result)
-    page.services.append(file_picker)
+    picker = ft.FilePicker(on_result=handle_result)
+    page.services.append(picker)
 
     load_button = ft.Button(content='Load files...',
                             icon=ft.Icons.FILE_UPLOAD_OUTLINED,
-                            action=ft.PickFiles(file_picker,
+                            action=ft.PickFiles(picker,
                                                 allow_multiple=True,
                                                 file_type=ft.FilePickerFileType.CUSTOM,
                                                 allowed_extensions=['tif', 'tiff'],
