@@ -28,7 +28,7 @@ class Projects:
             self.name_to_idx[name] = len(self)
             self.paths.append(None)
             self.progress.append(ft.ProgressRing(value=0., height=20, width=20, stroke_width=2, margin=1))
-            self.gui_rows.append(ft.Container(ft.Row([self.progress[-1], ft.Text(name)]), padding=5, border_radius=5, on_click=lambda _: self.select(name)))
+            self.gui_rows.append(ft.Container(ft.Row([self.progress[-1], ft.Text(name)]), padding=5, border_radius=10, on_click=lambda _: self.select(name)))
 
     def update_progress(self, name: str, value: float) -> None:
         idx = self.name_to_idx[name]
@@ -49,11 +49,15 @@ class Projects:
 
 
 
-def main(page: ft.Page):
+async def main(page: ft.Page):
+
+    def toggle_sidebar():
+        print(sidebar.visible)
+        sidebar.visible = not sidebar.visible
 
     page.title = 'MICHe Lab\'s Vascular Analysis Tool'
-    page.appbar = ft.AppBar(title=ft.Text(page.title), center_title=True)
-
+    page.appbar = ft.AppBar(leading=ft.IconButton(ft.Icons.FORMAT_LIST_BULLETED, on_click=toggle_sidebar), title=ft.Text(page.title))
+    page.theme = ft.Theme(color_scheme=ft.ColorScheme(primary=ft.Colors.GREEN))
     projects = Projects()
 
     async def handle_result(e: ft.FilePickerResultEvent):
@@ -69,13 +73,19 @@ def main(page: ft.Page):
 
     def handle_upload(e: ft.FilePickerUploadEvent):
         projects.update_progress(Path(e.file_name).stem, e.progress)
-        print(e.progress)
 
     picker = ft.FilePicker(on_result=handle_result,
                            on_upload=handle_upload)
     page.services.append(picker)
 
-    def save_tif():
+    select_button = ft.Button(content='Upload Files',
+                                icon=ft.Icons.UPLOAD,
+                                action=ft.PickFiles(picker,
+                                                    allow_multiple=True,
+                                                    file_type=ft.FilePickerFileType.CUSTOM,
+                                                    allowed_extensions=['tif', 'tiff', 'h5', 'hdf5']))
+    
+    def run_test():
         rng = np.random.default_rng(seed=17)
         array = rng.random((10, 256, 256))*255
         tifffile.imwrite('test.tif', array.astype('uint8'))
@@ -83,22 +93,18 @@ def main(page: ft.Page):
         array = tifffile.imread('uploads/ang_mv01.tif')
         print(array.shape, array.dtype)
 
+    test_button = ft.Button(content='Test', on_click=run_test)
 
-    select_button = ft.Button(content='Select files',
-                              icon=ft.Icons.FILE_UPLOAD_OUTLINED,
-                              action=ft.PickFiles(picker,
-                                                  allow_multiple=True,
-                                                  file_type=ft.FilePickerFileType.CUSTOM,
-                                                  allowed_extensions=['tif', 'tiff', 'h5', 'hdf5']))
+    sidebar = ft.Column([ft.Row([select_button, test_button]), ft.Column(projects.gui_rows, scroll=ft.ScrollMode.ADAPTIVE, expand=True)], expand=True)
+    view_2d = ft.InteractiveViewer(ft.RawImage(fit=ft.BoxFit.CONTAIN, filter_quality=ft.FilterQuality.NONE), expand=True, min_scale=1, max_scale=10)
+    view_3d = ft.InteractiveViewer(ft.RawImage(fit=ft.BoxFit.CONTAIN, filter_quality=ft.FilterQuality.NONE), expand=True, min_scale=1, max_scale=10)
 
-    test_button = ft.Button(content='Test',
-                            on_click=save_tif)
+    page.add(ft.Row([sidebar, view_2d, view_3d], expand=True))
 
-    page.add(ft.Column([ft.Row([select_button, test_button]),
-                        ft.Column(projects.gui_rows, scroll=ft.ScrollMode.HIDDEN)],
-                       expand=True))
+    await view_2d.content.render((np.random.random((10, 10, 3))*255).astype('uint8'))
+    await view_3d.content.render((np.random.random((10, 10, 3))*255).astype('uint8'))
 
 if __name__ == "__main__":
     DIR = Path(os.getenv('FLET_APP_STORAGE_DATA'))
-    ft.run(main, upload_dir=DIR/'uploads')
+    ft.run(main, upload_dir=DIR/'uploads', assets_dir=DIR)
     #uv run flet run --web main.py
