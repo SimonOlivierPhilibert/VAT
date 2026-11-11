@@ -1,6 +1,8 @@
+import asyncio
 import io
-from pathlib import Path
 import os
+import time
+from pathlib import Path
 
 import flet as ft
 import h5py
@@ -101,8 +103,14 @@ async def main(page: ft.Page):
 
     page.add(ft.Row([sidebar, view_2d, view_3d], expand=True))
 
-    await view_2d.content.render((np.random.random((10, 10, 3))*255).astype('uint8'))
-    await view_3d.content.render((np.random.random((10, 10, 3))*255).astype('uint8'))
+    async def update_images():
+        await asyncio.sleep(1)
+        await view_2d.content.render((np.random.random((10, 10, 3))*255).astype('uint8'))
+        await view_3d.content.render((np.random.random((10, 10, 3))*255).astype('uint8'))
+
+    while True:
+        await update_images()
+        
 
 if __name__ == "__main__":
     DIR = Path(os.getenv('FLET_APP_STORAGE_DATA'))
