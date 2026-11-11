@@ -60,6 +60,7 @@ async def main(page: ft.Page):
     page.title = 'MICHe Lab\'s Vascular Analysis Tool'
     page.appbar = ft.AppBar(leading=ft.IconButton(ft.Icons.FORMAT_LIST_BULLETED, on_click=toggle_sidebar), title=ft.Text(page.title))
     page.theme = ft.Theme(color_scheme=ft.ColorScheme(primary=ft.Colors.GREEN))
+    page.theme_mode = ft.ThemeMode.DARK
     projects = Projects()
 
     async def handle_result(e: ft.FilePickerResultEvent):
