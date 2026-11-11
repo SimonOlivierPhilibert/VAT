@@ -49,18 +49,30 @@ class Projects:
         self.gui_rows[idx].bgcolor = ft.Colors.PRIMARY_CONTAINER
 
 
-
-
 async def main(page: ft.Page):
+        
+    def run_test():
+        rng = np.random.default_rng(seed=17)
+        array = rng.random((10, 256, 256))*255
+        tifffile.imwrite('test.tif', array.astype('uint8'))
+        
+        array = tifffile.imread('uploads/ang_mv01.tif')
+        print(array.shape, array.dtype)
+
+    test_button = ft.Button(content='Test', on_click=run_test)
 
     def toggle_sidebar():
-        print(sidebar.visible)
         sidebar.visible = not sidebar.visible
+        toggle_sidebar_button.icon = (ft.Icons.ARROW_BACK_IOS_NEW_ROUNDED if sidebar.visible
+                                      else ft.Icons.ARROW_FORWARD_IOS_ROUNDED)
+
+    toggle_sidebar_button = ft.IconButton(ft.Icons.ARROW_BACK_IOS_NEW_ROUNDED, on_click=toggle_sidebar)
 
     page.title = 'MICHe Lab\'s Vascular Analysis Tool'
-    page.appbar = ft.AppBar(leading=ft.IconButton(ft.Icons.FORMAT_LIST_BULLETED, on_click=toggle_sidebar), title=ft.Text(page.title))
+    page.appbar = ft.AppBar(leading=toggle_sidebar_button, title=ft.Text(page.title), actions=[])
     page.theme = ft.Theme(color_scheme=ft.ColorScheme(primary=ft.Colors.GREEN))
     page.theme_mode = ft.ThemeMode.DARK
+
     projects = Projects()
 
     async def handle_result(e: ft.FilePickerResultEvent):
@@ -88,15 +100,7 @@ async def main(page: ft.Page):
                                                     file_type=ft.FilePickerFileType.CUSTOM,
                                                     allowed_extensions=['tif', 'tiff', 'h5', 'hdf5']))
     
-    def run_test():
-        rng = np.random.default_rng(seed=17)
-        array = rng.random((10, 256, 256))*255
-        tifffile.imwrite('test.tif', array.astype('uint8'))
-        
-        array = tifffile.imread('uploads/ang_mv01.tif')
-        print(array.shape, array.dtype)
 
-    test_button = ft.Button(content='Test', on_click=run_test)
 
     sidebar = ft.Column([ft.Row([select_button, test_button]), ft.Column(projects.gui_rows, scroll=ft.ScrollMode.ADAPTIVE, expand=True)], expand=True)
     view_2d = ft.InteractiveViewer(ft.RawImage(fit=ft.BoxFit.CONTAIN, filter_quality=ft.FilterQuality.NONE), expand=True, min_scale=1, max_scale=10)
@@ -105,7 +109,7 @@ async def main(page: ft.Page):
     page.add(ft.Row([sidebar, view_2d, view_3d], expand=True))
 
     async def update_images():
-        await asyncio.sleep(1)
+        await asyncio.sleep(5)
         await view_2d.content.render((np.random.random((10, 10, 3))*255).astype('uint8'))
         await view_3d.content.render((np.random.random((10, 10, 3))*255).astype('uint8'))
 
