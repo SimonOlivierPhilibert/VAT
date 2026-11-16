@@ -10,7 +10,7 @@ import numpy as np
 import tifffile
 
 os.environ['FLET_SECRET_KEY'] = os.urandom(12).hex()
-
+repo_url = "https://github.com/SimonOlivierPhilibert/VAT"
 class Projects:
 
     def __init__(self) -> None:
@@ -55,30 +55,39 @@ async def main(page: ft.Page):
         rng = np.random.default_rng(seed=17)
         array = rng.random((10, 256, 256))*255
         tifffile.imwrite('test.tif', array.astype('uint8'))
-        
+
+        print(toggle_sidebar_button.icon_color)
         array = tifffile.imread('uploads/ang_mv01.tif')
         print(array.shape, array.dtype)
 
-    test_button = ft.Button(content='run test', on_click=run_test)
+    test_button = ft.Button(content='run test',
+                            on_click=run_test)
 
     def toggle_sidebar():
         sidebar.visible = not sidebar.visible
         toggle_sidebar_button.icon = (ft.Icons.ARROW_BACK_IOS_NEW_ROUNDED if sidebar.visible
                                       else ft.Icons.ARROW_FORWARD_IOS_ROUNDED)
 
-    toggle_sidebar_button = ft.IconButton(ft.Icons.ARROW_BACK_IOS_NEW_ROUNDED, on_click=toggle_sidebar)
+    toggle_sidebar_button = ft.IconButton(ft.Icons.ARROW_BACK_IOS_NEW_ROUNDED,
+                                          on_click=toggle_sidebar)
 
     toggle_views_selector = ft.SegmentedButton(segments=[ft.Segment(value='2D', label='2D Editor', icon=ft.Icons.LAYERS),
                                                          ft.Segment(value='3D', label='3D Viewer', icon=ft.Icons.VIEW_IN_AR)],
                                                selected=['2D', '3D'],
-                                               allow_empty_selection=False, allow_multiple_selection=True)
+                                               allow_empty_selection=False,
+                                               allow_multiple_selection=True)
 
-
-
-
+    repo_button = ft.Button(content='Github Repository',
+                            icon=ft.Icons.OPEN_IN_NEW,
+                            action=ft.OpenUrl(url=repo_url),
+                            color=ft.Colors.WHITE)
 
     page.title = 'MICHe Lab\'s Vascular Analysis Tool'
-    page.appbar = ft.AppBar(leading=toggle_sidebar_button, title=ft.Text(page.title), actions=[test_button, toggle_views_selector])
+    page.appbar = ft.AppBar(leading=toggle_sidebar_button, title=ft.Text(page.title), actions=[test_button,
+                                                                                               ft.VerticalDivider(),
+                                                                                               toggle_views_selector,
+                                                                                               ft.VerticalDivider(),
+                                                                                               repo_button], actions_padding=10)
     page.theme = ft.Theme(color_scheme=ft.ColorScheme(primary=ft.Colors.GREEN))
     page.theme_mode = ft.ThemeMode.DARK
 
