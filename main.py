@@ -11,6 +11,8 @@ import tifffile
 
 os.environ['FLET_SECRET_KEY'] = os.urandom(12).hex()
 repo_url = "https://github.com/SimonOlivierPhilibert/VAT"
+
+
 class Projects:
 
     def __init__(self) -> None:
@@ -30,7 +32,10 @@ class Projects:
             self.name_to_idx[name] = len(self)
             self.paths.append(None)
             self.progress.append(ft.ProgressRing(value=0., height=20, width=20, stroke_width=2, margin=1))
-            self.gui_rows.append(ft.Container(ft.Row([self.progress[-1], ft.Text(name)]), padding=5, border_radius=10, on_click=lambda _: self.select(name)))
+            self.gui_rows.append(ft.Container(ft.Row([self.progress[-1], ft.Text(name)]),
+                                              padding=5,
+                                              border_radius=10,
+                                              on_click=lambda _: self.select(name)))
 
     def update_progress(self, name: str, value: float) -> None:
         idx = self.name_to_idx[name]
@@ -56,11 +61,13 @@ async def main(page: ft.Page):
         array = rng.random((10, 256, 256))*255
         tifffile.imwrite('test.tif', array.astype('uint8'))
 
-        print(toggle_sidebar_button.icon_color)
+        print(toggle_views_selector.selected)
+
         array = tifffile.imread('uploads/ang_mv01.tif')
         print(array.shape, array.dtype)
 
     test_button = ft.Button(content='run test',
+                            icon=ft.Icons.ARROW_FORWARD_IOS_ROUNDED,
                             on_click=run_test)
 
     def toggle_sidebar():
@@ -71,23 +78,30 @@ async def main(page: ft.Page):
     toggle_sidebar_button = ft.IconButton(ft.Icons.ARROW_BACK_IOS_NEW_ROUNDED,
                                           on_click=toggle_sidebar)
 
-    toggle_views_selector = ft.SegmentedButton(segments=[ft.Segment(value='2D', label='2D Editor', icon=ft.Icons.LAYERS),
-                                                         ft.Segment(value='3D', label='3D Viewer', icon=ft.Icons.VIEW_IN_AR)],
-                                               selected=['2D', '3D'],
+    def toggle_views(e: ft.Event[ft.SegmentedButton]) -> None:
+        editor.visible = 'editor' in e.data
+        viewer.visible = 'viewer' in e.data
+
+    toggle_views_selector = ft.SegmentedButton(segments=[ft.Segment(value='editor', label='2D Editor', icon=ft.Icons.LAYERS),
+                                                         ft.Segment(value='viewer', label='3D Viewer', icon=ft.Icons.VIEW_IN_AR)],
+                                               selected=['editor', 'viewer'],
                                                allow_empty_selection=False,
-                                               allow_multiple_selection=True)
+                                               allow_multiple_selection=True,
+                                               on_change=toggle_views)
 
     repo_button = ft.Button(content='Github Repository',
                             icon=ft.Icons.OPEN_IN_NEW,
-                            action=ft.OpenUrl(url=repo_url),
-                            color=ft.Colors.WHITE)
+                            action=ft.OpenUrl(url=repo_url))
 
     page.title = 'MICHe Lab\'s Vascular Analysis Tool'
-    page.appbar = ft.AppBar(leading=toggle_sidebar_button, title=ft.Text(page.title), actions=[test_button,
-                                                                                               ft.VerticalDivider(),
-                                                                                               toggle_views_selector,
-                                                                                               ft.VerticalDivider(),
-                                                                                               repo_button], actions_padding=10)
+    page.appbar = ft.AppBar(leading=toggle_sidebar_button,
+                            title=ft.Text(page.title),
+                            actions=[test_button,
+                                     ft.VerticalDivider(),
+                                     toggle_views_selector,
+                                     ft.VerticalDivider(),
+                                     repo_button],
+                            actions_padding=10)
     page.theme = ft.Theme(color_scheme_seed=ft.Colors.GREEN)
     page.theme_mode = ft.ThemeMode.DARK
 
@@ -118,18 +132,25 @@ async def main(page: ft.Page):
                                                     file_type=ft.FilePickerFileType.CUSTOM,
                                                     allowed_extensions=['tif', 'tiff', 'h5', 'hdf5']))
     
-
-
     sidebar = ft.Column([select_button, ft.Column(projects.gui_rows, scroll=ft.ScrollMode.ADAPTIVE, expand=True)], expand=True)
-    view_2d = ft.InteractiveViewer(ft.RawImage(fit=ft.BoxFit.CONTAIN, filter_quality=ft.FilterQuality.NONE), expand=True, min_scale=1, max_scale=10)
-    view_3d = ft.InteractiveViewer(ft.RawImage(fit=ft.BoxFit.CONTAIN, filter_quality=ft.FilterQuality.NONE), expand=True, min_scale=1, max_scale=10)
 
-    page.add(ft.Row([sidebar, view_2d, view_3d], expand=True))
+    view_2d = ft.InteractiveViewer(ft.RawImage(fit=ft.BoxFit.CONTAIN, filter_quality=ft.FilterQuality.NONE), expand=True, min_scale=1, max_scale=10)
+    editor = ft.Column(controls=[view_2d], expand=True)
+
+    view_3d = ft.InteractiveViewer(ft.RawImage(fit=ft.BoxFit.CONTAIN, filter_quality=ft.FilterQuality.NONE), expand=True, min_scale=1, max_scale=10)
+    viewer = ft.Column(controls=[view_3d], expand=True)
+
+
+    views = ft.Row([sidebar, editor, viewer], expand=True)
+
+    page.add(views)
 
     async def update_images():
-        await asyncio.sleep(5)
-        await view_2d.content.render((np.random.random((10, 10, 3))*255).astype('uint8'))
-        await view_3d.content.render((np.random.random((10, 10, 3))*255).astype('uint8'))
+        await asyncio.sleep(1)
+        if editor.visible:
+            await view_2d.content.render((np.random.random((10, 10, 3))*255).astype('uint8'))
+        if viewer.visible:
+            await view_3d.content.render((np.random.random((10, 10, 3))*255).astype('uint8'))
 
     while True:
         await update_images()
