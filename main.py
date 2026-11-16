@@ -59,7 +59,7 @@ async def main(page: ft.Page):
         array = tifffile.imread('uploads/ang_mv01.tif')
         print(array.shape, array.dtype)
 
-    test_button = ft.Button(content='Test', on_click=run_test)
+    test_button = ft.Button(content='run test', on_click=run_test)
 
     def toggle_sidebar():
         sidebar.visible = not sidebar.visible
@@ -78,7 +78,7 @@ async def main(page: ft.Page):
 
 
     page.title = 'MICHe Lab\'s Vascular Analysis Tool'
-    page.appbar = ft.AppBar(leading=toggle_sidebar_button, title=ft.Text(page.title), actions=[toggle_views_selector])
+    page.appbar = ft.AppBar(leading=toggle_sidebar_button, title=ft.Text(page.title), actions=[test_button, toggle_views_selector])
     page.theme = ft.Theme(color_scheme=ft.ColorScheme(primary=ft.Colors.GREEN))
     page.theme_mode = ft.ThemeMode.DARK
 
@@ -111,7 +111,7 @@ async def main(page: ft.Page):
     
 
 
-    sidebar = ft.Column([ft.Row([select_button, test_button]), ft.Column(projects.gui_rows, scroll=ft.ScrollMode.ADAPTIVE, expand=True)], expand=True)
+    sidebar = ft.Column([select_button, ft.Column(projects.gui_rows, scroll=ft.ScrollMode.ADAPTIVE, expand=True)], expand=True)
     view_2d = ft.InteractiveViewer(ft.RawImage(fit=ft.BoxFit.CONTAIN, filter_quality=ft.FilterQuality.NONE), expand=True, min_scale=1, max_scale=10)
     view_3d = ft.InteractiveViewer(ft.RawImage(fit=ft.BoxFit.CONTAIN, filter_quality=ft.FilterQuality.NONE), expand=True, min_scale=1, max_scale=10)
 
