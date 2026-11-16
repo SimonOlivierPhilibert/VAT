@@ -12,10 +12,6 @@ import tifffile
 os.environ['FLET_SECRET_KEY'] = os.urandom(12).hex()
 repo_url = "https://github.com/SimonOlivierPhilibert/VAT"
 
-class FixedSegmentedButton(ft.SegmentedButton):
-
-    def before_update(self):
-        pass
 
 class Projects:
 
