@@ -12,6 +12,10 @@ import tifffile
 os.environ['FLET_SECRET_KEY'] = os.urandom(12).hex()
 repo_url = "https://github.com/SimonOlivierPhilibert/VAT"
 
+class FixedSegmentedButton(ft.SegmentedButton):
+
+    def before_update(self):
+        pass
 
 class Projects:
 
@@ -78,16 +82,23 @@ async def main(page: ft.Page):
     toggle_sidebar_button = ft.IconButton(ft.Icons.ARROW_BACK_IOS_NEW_ROUNDED,
                                           on_click=toggle_sidebar)
 
-    def toggle_views(e: ft.Event[ft.SegmentedButton]) -> None:
-        editor.visible = 'editor' in e.data
-        viewer.visible = 'viewer' in e.data
+    def toggle_editor(e: ft.Event[ft.Switch]) -> None:
+        viewer_switch.disabled = not e.data
+        editor.visible = e.data
 
-    toggle_views_selector = ft.SegmentedButton(segments=[ft.Segment(value='editor', label='2D Editor', icon=ft.Icons.LAYERS),
-                                                         ft.Segment(value='viewer', label='3D Viewer', icon=ft.Icons.VIEW_IN_AR)],
-                                               selected=['editor', 'viewer'],
-                                               allow_empty_selection=False,
-                                               allow_multiple_selection=True,
-                                               on_change=toggle_views)
+    editor_switch = ft.Switch(label=ft.Row(controls=[ft.Icon(ft.Icons.LAYERS), ft.Text('2D Editor  ')]),
+                              value=True,
+                              on_change=toggle_editor,
+                              label_position=ft.LabelPosition.LEFT)
+
+    def toggle_viewer(e: ft.Event[ft.Switch]) -> None:
+        editor_switch.disabled = not e.data
+        viewer.visible = e.data
+
+    viewer_switch = ft.Switch(label=ft.Row(controls=[ft.Icon(ft.Icons.VIEW_IN_AR), ft.Text('3D Viewer  ')]),
+                              value=True,
+                              on_change=toggle_viewer,
+                              label_position=ft.LabelPosition.LEFT)
 
     repo_button = ft.Button(content='Github Repository',
                             icon=ft.Icons.OPEN_IN_NEW,
@@ -98,7 +109,9 @@ async def main(page: ft.Page):
                             title=ft.Text(page.title),
                             actions=[test_button,
                                      ft.VerticalDivider(),
-                                     toggle_views_selector,
+                                     editor_switch,
+                                     ft.VerticalDivider(),
+                                     viewer_switch,
                                      ft.VerticalDivider(),
                                      repo_button],
                             actions_padding=10)
