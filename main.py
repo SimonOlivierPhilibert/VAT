@@ -61,8 +61,6 @@ async def main(page: ft.Page):
         array = rng.random((10, 256, 256))*255
         tifffile.imwrite('test.tif', array.astype('uint8'))
 
-        print(toggle_views_selector.selected)
-
         array = tifffile.imread('uploads/ang_mv01.tif')
         print(array.shape, array.dtype)
 
