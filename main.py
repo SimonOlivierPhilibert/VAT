@@ -64,8 +64,8 @@ async def main(page: ft.Page):
         array = tifffile.imread('uploads/ang_mv01.tif')
         print(array.shape, array.dtype)
 
-    test_button = ft.Button(content='run test',
-                            icon=ft.Icons.ARROW_FORWARD_IOS_ROUNDED,
+    test_button = ft.Button(content='TEST',
+                            icon=ft.Icons.BUILD,
                             on_click=run_test)
 
     def toggle_sidebar():
@@ -101,9 +101,7 @@ async def main(page: ft.Page):
     page.title = 'MICHe Lab\'s Vascular Analysis Tool'
     page.appbar = ft.AppBar(leading=toggle_sidebar_button,
                             title=ft.Text(page.title),
-                            actions=[test_button,
-                                     ft.VerticalDivider(),
-                                     editor_switch,
+                            actions=[editor_switch,
                                      ft.VerticalDivider(),
                                      viewer_switch,
                                      ft.VerticalDivider(),
@@ -141,12 +139,51 @@ async def main(page: ft.Page):
     
     sidebar = ft.Column([select_button, ft.Column(projects.gui_rows, scroll=ft.ScrollMode.ADAPTIVE, expand=True)], expand=True)
 
-    view_2d = ft.InteractiveViewer(ft.RawImage(fit=ft.BoxFit.CONTAIN, filter_quality=ft.FilterQuality.NONE), expand=True, min_scale=1, max_scale=10)
-    editor = ft.Column(controls=[view_2d], expand=True)
+    contrast_slider = ft.RangeSlider(start_value=0, end_value=1)
+
+    clear_layer_button = ft.IconButton(icon=ft.Icons.DELETE, tooltip=ft.Tooltip(message='Clear active layer'))
+
+    clear_all_button = ft.IconButton(icon=ft.Icons.DELETE_SWEEP, tooltip=ft.Tooltip(message='Clear all layers'))
+
+    controls1 = ft.Row(controls=[ft.Column([ft.Text('Adjust Constrast'), contrast_slider],
+                                              spacing=0,
+                                              horizontal_alignment=ft.CrossAxisAlignment.CENTER),
+                                clear_layer_button,
+                                clear_all_button],
+                          alignment=ft.MainAxisAlignment.CENTER)
+
+    mode_selector = ft.SegmentedButton(segments=[ft.Segment(value='retouch', icon=ft.Icons.AUTO_AWESOME, label='Retouch'),
+                                                 ft.Segment(value='scribble', icon=ft.Icons.GESTURE, label='Scribble')],
+                                       selected=['retouch'],
+                                       show_selected_icon=False)
+
+    tool_selector = ft.SegmentedButton(segments=[ft.Segment(value='move', icon=ft.Icons.PAN_TOOL, label='Pan'),
+                                                 ft.Segment(value='edit', icon=ft.Icons.BRUSH, label='Draw')],
+                                       selected=['move'],
+                                       show_selected_icon=False)
+    
+    values = [1, 2, 3, 4, 5, 10, 20, 30, 50, 75, 100]
+
+    def display_radius(e: ft.Event[ft.Slider]) -> None:
+        e.control.label = values[int(e.data)]
+    
+    radius_slider = ft.Slider(value=0, min=0, max=10, divisions=10, on_change=display_radius)
+
+    controls2 = ft.Row(controls=[mode_selector,
+                                tool_selector,
+                                ft.Column([ft.Text('Brush Radius'), radius_slider],
+                                          spacing=0,
+                                          horizontal_alignment=ft.CrossAxisAlignment.CENTER)],
+                      alignment=ft.MainAxisAlignment.CENTER)
+
+    view_2d = ft.InteractiveViewer(ft.RawImage(fit=ft.BoxFit.CONTAIN, filter_quality=ft.FilterQuality.NONE), aspect_ratio=None, expand=True, min_scale=1, max_scale=10)
+
+    frame_slider = ft.Slider(value=0, min=0, max=10, divisions=10, on_change=display_radius)
+
+    editor = ft.Column(controls=[controls1, controls2, ft.Row(view_2d, expand=True), frame_slider], expand=True, horizontal_alignment=ft.CrossAxisAlignment.CENTER)
 
     view_3d = ft.InteractiveViewer(ft.RawImage(fit=ft.BoxFit.CONTAIN, filter_quality=ft.FilterQuality.NONE), expand=True, min_scale=1, max_scale=10)
     viewer = ft.Column(controls=[view_3d], expand=True)
-
 
     views = ft.Row([sidebar, editor, viewer], expand=True)
 
