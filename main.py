@@ -88,7 +88,7 @@ async def main(page: ft.Page):
                                                                                                toggle_views_selector,
                                                                                                ft.VerticalDivider(),
                                                                                                repo_button], actions_padding=10)
-    page.theme = ft.Theme(color_scheme=ft.ColorScheme(primary=ft.Colors.GREEN))
+    page.theme = ft.Theme(color_scheme_seed=ft.Colors.GREEN)
     page.theme_mode = ft.ThemeMode.DARK
 
     projects = Projects()
