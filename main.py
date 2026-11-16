@@ -68,8 +68,17 @@ async def main(page: ft.Page):
 
     toggle_sidebar_button = ft.IconButton(ft.Icons.ARROW_BACK_IOS_NEW_ROUNDED, on_click=toggle_sidebar)
 
+    toggle_views_selector = ft.SegmentedButton(segments=[ft.Segment(value='2D', label='2D Editor', icon=ft.Icons.LAYERS),
+                                                         ft.Segment(value='3D', label='3D Viewer', icon=ft.Icons.VIEW_IN_AR)],
+                                               selected=['2D', '3D'],
+                                               allow_empty_selection=False, allow_multiple_selection=True)
+
+
+
+
+
     page.title = 'MICHe Lab\'s Vascular Analysis Tool'
-    page.appbar = ft.AppBar(leading=toggle_sidebar_button, title=ft.Text(page.title), actions=[])
+    page.appbar = ft.AppBar(leading=toggle_sidebar_button, title=ft.Text(page.title), actions=[toggle_views_selector])
     page.theme = ft.Theme(color_scheme=ft.ColorScheme(primary=ft.Colors.GREEN))
     page.theme_mode = ft.ThemeMode.DARK
 
