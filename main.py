@@ -78,7 +78,7 @@ async def main(page: ft.Page):
 
     def toggle_editor(e: ft.Event[ft.Switch]) -> None:
         viewer_switch.disabled = not e.data
-        editor.visible = e.data
+        editor_layout.visible = e.data
 
     editor_switch = ft.Switch(label=ft.Row(controls=[ft.Icon(ft.Icons.LAYERS), ft.Text('2D Editor  ')]),
                               value=True,
@@ -106,7 +106,9 @@ async def main(page: ft.Page):
                                      viewer_switch,
                                      ft.VerticalDivider(),
                                      repo_button],
-                            actions_padding=10)
+                            actions_padding=10,
+                            bgcolor=ft.Colors.SHADOW,
+                            elevation_on_scroll=0)
     page.theme = ft.Theme(color_scheme_seed=ft.Colors.GREEN)
     page.theme_mode = ft.ThemeMode.DARK
 
@@ -131,68 +133,180 @@ async def main(page: ft.Page):
     page.services.append(picker)
 
     select_button = ft.Button(content='Upload Files',
-                                icon=ft.Icons.UPLOAD,
-                                action=ft.PickFiles(picker,
-                                                    allow_multiple=True,
-                                                    file_type=ft.FilePickerFileType.CUSTOM,
-                                                    allowed_extensions=['tif', 'tiff', 'h5', 'hdf5']))
+                              icon=ft.Icons.UPLOAD,
+                              action=ft.PickFiles(picker,
+                                                  allow_multiple=True,
+                                                  file_type=ft.FilePickerFileType.CUSTOM,
+                                                  allowed_extensions=['tif', 'tiff', 'h5', 'hdf5']))
     
     sidebar = ft.Column([select_button, ft.Column(projects.gui_rows, scroll=ft.ScrollMode.ADAPTIVE, expand=True)], expand=True)
-
-    contrast_slider = ft.RangeSlider(start_value=0, end_value=1)
-
-    clear_layer_button = ft.IconButton(icon=ft.Icons.DELETE, tooltip=ft.Tooltip(message='Clear active layer'))
-
-    clear_all_button = ft.IconButton(icon=ft.Icons.DELETE_SWEEP, tooltip=ft.Tooltip(message='Clear all layers'))
-
-    controls1 = ft.Row(controls=[ft.Column([ft.Text('Adjust Constrast'), contrast_slider],
-                                              spacing=0,
-                                              horizontal_alignment=ft.CrossAxisAlignment.CENTER),
-                                clear_layer_button,
-                                clear_all_button],
-                          alignment=ft.MainAxisAlignment.CENTER)
-
-    mode_selector = ft.SegmentedButton(segments=[ft.Segment(value='retouch', icon=ft.Icons.AUTO_AWESOME, label='Retouch'),
-                                                 ft.Segment(value='scribble', icon=ft.Icons.GESTURE, label='Scribble')],
-                                       selected=['retouch'],
-                                       show_selected_icon=False)
-
-    tool_selector = ft.SegmentedButton(segments=[ft.Segment(value='move', icon=ft.Icons.PAN_TOOL, label='Pan'),
-                                                 ft.Segment(value='edit', icon=ft.Icons.BRUSH, label='Draw')],
-                                       selected=['move'],
-                                       show_selected_icon=False)
     
-    values = [1, 2, 3, 4, 5, 10, 20, 30, 50, 75, 100]
-
-    def display_radius(e: ft.Event[ft.Slider]) -> None:
-        e.control.label = values[int(e.data)]
+    def display_value(
+        e: ft.Event[ft.Slider],
+        values: list[int] | None = None,
+    ) -> None:
+        print(e.data)
+        e.control.label = int(e.data) if values is None else values[int(e.data)]
     
-    radius_slider = ft.Slider(value=0, min=0, max=10, divisions=10, on_change=display_radius)
+    editor_controls = dict(
+        image_contrast=ft.RangeSlider(
+            start_value=0,
+            end_value=1,
+            expand=True,
+        ),
+        brush_radius=ft.Slider(
+            value=0,
+            min=0,
+            max=10,
+            divisions=10,
+            on_change=lambda e: display_value(e, [1, 2, 3, 4, 5, 10, 20, 30, 50, 75, 100]),
+            expand=True,
+        ),
+        clear_layer=ft.IconButton(
+            icon=ft.Icons.CLEAR,
+            tooltip=ft.Tooltip(
+                message='Clear active layer'
+            ),
+        ),
+        clear_all=ft.IconButton(
+            icon=ft.Icons.DELETE_SWEEP,
+            tooltip=ft.Tooltip(
+                message='Clear all layers'
+            ),
+        ),
+        mode=ft.SegmentedButton(
+            segments=[
+                ft.Segment(
+                    value='retouch',
+                    icon=ft.Icons.AUTO_AWESOME,
+                    label='Retouch'
+                ),
+                ft.Segment(
+                    value='scribble',
+                    icon=ft.Icons.GESTURE,
+                    label='Scribble'
+                ),
+            ],
+            selected=['retouch'],
+            show_selected_icon=False,
+        ),
+        tool=ft.SegmentedButton(
+            segments=[
+                ft.Segment(
+                    value='move',
+                    icon=ft.Icons.PAN_TOOL,
+                    label='Pan'
+                ),
+                ft.Segment(
+                    value='edit',
+                    icon=ft.Icons.BRUSH,
+                    label='Draw'
+                ),
+            ],
+            selected=['move'],
+            show_selected_icon=False,
+        ),
+        frame=ft.Slider(
+            value=0,
+            min=0,
+            max=10,
+            divisions=10,
+            on_change=display_value,
+        ),
+        view=ft.InteractiveViewer(
+            ft.RawImage(
+                fit=ft.BoxFit.CONTAIN,
+                filter_quality=ft.FilterQuality.NONE,
+            ),
+            aspect_ratio=None,
+            expand=True,
+            min_scale=1,
+            max_scale=10,
+        ),
+    )
 
-    controls2 = ft.Row(controls=[mode_selector,
-                                tool_selector,
-                                ft.Column([ft.Text('Brush Radius'), radius_slider],
-                                          spacing=0,
-                                          horizontal_alignment=ft.CrossAxisAlignment.CENTER)],
-                      alignment=ft.MainAxisAlignment.CENTER)
-
-    view_2d = ft.InteractiveViewer(ft.RawImage(fit=ft.BoxFit.CONTAIN, filter_quality=ft.FilterQuality.NONE), aspect_ratio=None, expand=True, min_scale=1, max_scale=10)
-
-    frame_slider = ft.Slider(value=0, min=0, max=10, divisions=10, on_change=display_radius)
-
-    editor = ft.Column(controls=[controls1, controls2, ft.Row(view_2d, expand=True), frame_slider], expand=True, horizontal_alignment=ft.CrossAxisAlignment.CENTER)
+    editor_layout = ft.Column(
+        expand=True,
+        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        controls=[
+            ft.Container(
+                padding=10,
+                border_radius=20,
+                bgcolor=ft.Colors.SHADOW,
+                content=ft.Column(
+                    intrinsic_width=True,
+                    alignment=ft.MainAxisAlignment.START,
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    controls=[
+                        ft.Row(
+                            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                            controls=[
+                                ft.Column(
+                                    expand=True,
+                                    spacing=0,
+                                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                                    controls=[
+                                        ft.Text(
+                                            value='Image Constrast'
+                                        ),
+                                        editor_controls['image_contrast'],
+                                    ],
+                                ),
+                                ft.Column(
+                                    expand=True,
+                                    spacing=0,
+                                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                                    controls=[
+                                        ft.Text(
+                                            value='Brush Radius'
+                                        ),
+                                        editor_controls['brush_radius'],
+                                    ],
+                                ),
+                            ],
+                        ),
+                        ft.Row(
+                            alignment=ft.MainAxisAlignment.CENTER,
+                            controls=[
+                                editor_controls['mode'],
+                                editor_controls['tool'],
+                                editor_controls['clear_layer'],
+                                editor_controls['clear_all'],
+                            ],
+                        ),
+                    ],
+                ),
+            ),
+            ft.Container(
+                expand=True,
+                border_radius=20,
+                bgcolor=ft.Colors.SHADOW,
+                content=ft.Column(
+                    controls=[
+                        ft.Row(
+                            expand=True,
+                            controls=[
+                                editor_controls['view'],
+                            ],
+                        ),
+                        editor_controls['frame'],
+                    ],
+                ),
+            ),
+        ],
+    )
 
     view_3d = ft.InteractiveViewer(ft.RawImage(fit=ft.BoxFit.CONTAIN, filter_quality=ft.FilterQuality.NONE), expand=True, min_scale=1, max_scale=10)
     viewer = ft.Column(controls=[view_3d], expand=True)
 
-    views = ft.Row([sidebar, editor, viewer], expand=True)
+    views = ft.Row([sidebar, editor_layout, viewer], expand=True)
 
     page.add(views)
 
     async def update_images():
         await asyncio.sleep(1)
-        if editor.visible:
-            await view_2d.content.render((np.random.random((10, 10, 3))*255).astype('uint8'))
+        if editor_layout.visible:
+            await editor_controls['view'].content.render((np.random.random((10, 10, 3))*255).astype('uint8'))
         if viewer.visible:
             await view_3d.content.render((np.random.random((10, 10, 3))*255).astype('uint8'))
 
