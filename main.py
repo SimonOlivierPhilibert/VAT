@@ -8,6 +8,7 @@ import tifffile
 
 os.environ['FLET_SECRET_KEY'] = os.urandom(12).hex()
 repo_url = "https://github.com/SimonOlivierPhilibert/VAT"
+radius = 20
 
 
 class Projects:
@@ -31,7 +32,7 @@ class Projects:
             self.progress.append(ft.ProgressRing(value=0., height=20, width=20, stroke_width=2, margin=1))
             self.gui_rows.append(ft.Container(ft.Row([self.progress[-1], ft.Text(name)]),
                                               padding=5,
-                                              border_radius=10,
+                                              border_radius=radius,
                                               on_click=lambda _: self.select(name)))
 
     def update_progress(self, name: str, value: float) -> None:
@@ -52,60 +53,76 @@ class Projects:
 
 
 async def main(page: ft.Page):
-        
-    def run_test():
-        rng = np.random.default_rng(seed=17)
-        array = rng.random((10, 256, 256))*255
-        tifffile.imwrite('test.tif', array.astype('uint8'))
 
-        array = tifffile.imread('uploads/ang_mv01.tif')
-        print(array.shape, array.dtype)
+    radius = 20
 
-    test_button = ft.Button(content='TEST',
-                            icon=ft.Icons.BUILD,
-                            on_click=run_test)
-
-    def toggle_sidebar():
+    def toggle_sidebar() -> None:
         sidebar.visible = not sidebar.visible
-        toggle_sidebar_button.icon = (ft.Icons.ARROW_BACK_IOS_NEW_ROUNDED if sidebar.visible
-                                      else ft.Icons.ARROW_FORWARD_IOS_ROUNDED)
+        sidebar_switch.icon = (ft.Icons.ARROW_BACK_IOS_NEW_ROUNDED
+                               if sidebar.visible
+                               else ft.Icons.ARROW_FORWARD_IOS_ROUNDED)
 
-    toggle_sidebar_button = ft.IconButton(ft.Icons.ARROW_BACK_IOS_NEW_ROUNDED,
-                                          on_click=toggle_sidebar)
+    sidebar_switch = ft.IconButton(
+        icon=ft.Icons.ARROW_BACK_IOS_NEW_ROUNDED,
+        on_click=toggle_sidebar,
+    )
 
-    def toggle_editor(e: ft.Event[ft.Switch]) -> None:
+    def toggle_editor(
+        e: ft.Event[ft.Switch],
+    ) -> None:
         viewer_switch.disabled = not e.data
         editor_layout.visible = e.data
 
-    editor_switch = ft.Switch(label=ft.Row(controls=[ft.Icon(ft.Icons.LAYERS), ft.Text('2D Editor  ')]),
-                              value=True,
-                              on_change=toggle_editor,
-                              label_position=ft.LabelPosition.LEFT)
+    editor_switch = ft.Switch(
+        value=True,
+        on_change=toggle_editor,
+        label_position=ft.LabelPosition.LEFT,
+        label=ft.Row(
+            controls=[
+                ft.Icon(ft.Icons.LAYERS),
+                ft.Text('2D Editor  '),
+            ],
+        ),
+    )
 
-    def toggle_viewer(e: ft.Event[ft.Switch]) -> None:
+    def toggle_viewer(
+        e: ft.Event[ft.Switch],
+    ) -> None:
         editor_switch.disabled = not e.data
         viewer.visible = e.data
 
-    viewer_switch = ft.Switch(label=ft.Row(controls=[ft.Icon(ft.Icons.VIEW_IN_AR), ft.Text('3D Viewer  ')]),
-                              value=True,
-                              on_change=toggle_viewer,
-                              label_position=ft.LabelPosition.LEFT)
+    viewer_switch = ft.Switch(
+        value=True,
+        on_change=toggle_viewer,
+        label_position=ft.LabelPosition.LEFT,
+        label=ft.Row(
+            controls=[
+                ft.Icon(ft.Icons.VIEW_IN_AR),
+                ft.Text('3D Viewer  '),
+            ],
+        ),
+    )
 
-    repo_button = ft.Button(content='Github Repository',
-                            icon=ft.Icons.OPEN_IN_NEW,
-                            action=ft.OpenUrl(url=repo_url))
+    repo_button = ft.Button(
+        content='Github Repository',
+        icon=ft.Icons.OPEN_IN_NEW,
+        action=ft.OpenUrl(url=repo_url),
+    )
 
     page.title = 'MICHe Lab\'s Vascular Analysis Tool'
-    page.appbar = ft.AppBar(leading=toggle_sidebar_button,
-                            title=ft.Text(page.title),
-                            actions=[editor_switch,
-                                     ft.VerticalDivider(),
-                                     viewer_switch,
-                                     ft.VerticalDivider(),
-                                     repo_button],
-                            actions_padding=10,
-                            bgcolor=ft.Colors.SHADOW,
-                            elevation_on_scroll=0)
+    page.appbar = ft.AppBar(
+        leading=sidebar_switch,
+        title=ft.Text(page.title),
+        actions=[
+            editor_switch,
+            ft.VerticalDivider(),
+            viewer_switch,
+            ft.VerticalDivider(),
+            repo_button],
+        actions_padding=10,
+        bgcolor=ft.Colors.SHADOW,
+        elevation_on_scroll=0,
+    )
     page.theme = ft.Theme(color_scheme_seed=ft.Colors.GREEN)
     page.theme_mode = ft.ThemeMode.DARK
 
@@ -228,7 +245,7 @@ async def main(page: ft.Page):
         controls=[
             ft.Container(
                 padding=10,
-                border_radius=20,
+                border_radius=radius,
                 bgcolor=ft.Colors.SHADOW,
                 content=ft.Column(
                     intrinsic_width=True,
@@ -276,7 +293,7 @@ async def main(page: ft.Page):
             ),
             ft.Container(
                 expand=True,
-                border_radius=20,
+                border_radius=radius,
                 bgcolor=ft.Colors.SHADOW,
                 content=ft.Column(
                     controls=[
@@ -292,6 +309,15 @@ async def main(page: ft.Page):
             ),
         ],
     )
+
+    viewer_controls = dict(
+
+    )
+
+    viewer_layout = ft.Column(
+
+    )
+
 
     view_3d = ft.InteractiveViewer(ft.RawImage(fit=ft.BoxFit.CONTAIN, filter_quality=ft.FilterQuality.NONE), expand=True, min_scale=1, max_scale=10)
     viewer = ft.Column(controls=[view_3d], expand=True)
