@@ -1,11 +1,8 @@
 import asyncio
-import io
 import os
-import time
 from pathlib import Path
 
 import flet as ft
-import h5py
 import numpy as np
 import tifffile
 
