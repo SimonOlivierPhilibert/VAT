@@ -312,6 +312,6 @@ async def main(page: ft.Page):
         
 
 if __name__ == "__main__":
-    DIR = Path(os.getenv('FLET_APP_STORAGE_DATA'))
+    DIR = Path(os.getenv('FLET_APP_STORAGE_DATA', './'))
     ft.run(main, upload_dir=DIR/'uploads', assets_dir=DIR)
     #uv run flet run --web main.py
