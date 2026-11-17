@@ -89,7 +89,7 @@ async def main(page: ft.Page):
         e: ft.Event[ft.Switch],
     ) -> None:
         editor_switch.disabled = not e.data
-        viewer.visible = e.data
+        viewer_layout.visible = e.data
 
     viewer_switch = ft.Switch(
         value=True,
@@ -228,14 +228,14 @@ async def main(page: ft.Page):
             on_change=display_value,
         ),
         view=ft.InteractiveViewer(
-            ft.RawImage(
-                fit=ft.BoxFit.CONTAIN,
-                filter_quality=ft.FilterQuality.NONE,
-            ),
             aspect_ratio=None,
             expand=True,
             min_scale=1,
             max_scale=10,
+            content=ft.RawImage(
+                fit=ft.BoxFit.CONTAIN,
+                filter_quality=ft.FilterQuality.NONE,
+            ),
         ),
     )
 
@@ -296,6 +296,7 @@ async def main(page: ft.Page):
                 border_radius=radius,
                 bgcolor=ft.Colors.SHADOW,
                 content=ft.Column(
+                    spacing=0,
                     controls=[
                         ft.Row(
                             expand=True,
@@ -311,18 +312,66 @@ async def main(page: ft.Page):
     )
 
     viewer_controls = dict(
-
+        refresh=ft.Button(
+            content='Reload Figure',
+            icon=ft.Icons.SYNC,
+        ),
+        graph=ft.Button(
+            content='Extract Graph',
+            icon=ft.Icons.SHARE,
+        ),
+        view=ft.InteractiveViewer(
+            aspect_ratio=None,
+            expand=True,
+            min_scale=1,
+            max_scale=10,
+            content=ft.RawImage(
+                fit=ft.BoxFit.CONTAIN,
+                filter_quality=ft.FilterQuality.NONE
+            ),
+        ),
     )
 
     viewer_layout = ft.Column(
-
+        expand=True,
+        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        controls=[
+            ft.Container(
+                padding=10,
+                border_radius=radius,
+                bgcolor=ft.Colors.SHADOW,
+                content=ft.Row(
+                    tight=True,
+                    alignment=ft.MainAxisAlignment.CENTER,
+                    controls=[
+                        viewer_controls['graph'],
+                        viewer_controls['refresh'],
+                    ],
+                ),
+            ),
+            ft.Container(
+                expand=True,
+                border_radius=radius,
+                bgcolor=ft.Colors.SHADOW,
+                content=ft.Row(
+                    expand=True,
+                    controls=[
+                        viewer_controls['view'],
+                    ],
+                ),
+            ),
+        ],
     )
 
-
-    view_3d = ft.InteractiveViewer(ft.RawImage(fit=ft.BoxFit.CONTAIN, filter_quality=ft.FilterQuality.NONE), expand=True, min_scale=1, max_scale=10)
-    viewer = ft.Column(controls=[view_3d], expand=True)
-
-    views = ft.Row([sidebar, editor_layout, viewer], expand=True)
+    views = ft.Row(
+        spacing=20,
+        expand=True,
+        controls=[
+            sidebar,
+            editor_layout,
+            viewer_layout,
+        ],
+    )
 
     page.add(views)
 
@@ -330,8 +379,8 @@ async def main(page: ft.Page):
         await asyncio.sleep(1)
         if editor_layout.visible:
             await editor_controls['view'].content.render((np.random.random((10, 10, 3))*255).astype('uint8'))
-        if viewer.visible:
-            await view_3d.content.render((np.random.random((10, 10, 3))*255).astype('uint8'))
+        if viewer_layout.visible:
+            await viewer_controls['view'].content.render((np.random.random((10, 10, 3))*255).astype('uint8'))
 
     while True:
         await update_images()
